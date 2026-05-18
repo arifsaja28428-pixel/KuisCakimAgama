@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMBAH KUIS — Sistem Kuis Hukum Peradilan Agama</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b1426;
+    --navy2: #111d35;
+    --navy3: #162040;
+    --gold: #c9933a;
+    --gold2: #e8b45a;
+    --gold3: #f5d08a;
+    --cream: #f5f0e8;
+    --cream2: #ede5d4;
+    --red: #c0392b;
+    --green: #1a7a4a;
+    --text: #e8dfc8;
+    --text2: #b8a98a;
+    --glass: rgba(255,255,255,0.04);
+    --glass2: rgba(255,255,255,0.08);
+    --border: rgba(201,147,58,0.25);
+    --shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Background Texture ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201,147,58,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 90%, rgba(11,20,38,0.8) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(201,147,58,0.03) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(201,147,58,0.03) 60px);
+    pointer-events: none; z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── Header ── */
+  .site-header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    position: relative;
+  }
+  .header-emblem {
+    width: 70px; height: 70px;
+    margin: 0 auto 16px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 0 30px rgba(201,147,58,0.3), inset 0 0 20px rgba(201,147,58,0.05);
+    background: var(--glass);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 30px rgba(201,147,58,0.3), inset 0 0 20px rgba(201,147,58,0.05); }
+    50% { box-shadow: 0 0 50px rgba(201,147,58,0.5), inset 0 0 30px rgba(201,147,58,0.1); }
+  }
+  .site-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--gold2);
+    line-height: 1.1;
+  }
+  .site-header p {
+    font-size: 13px;
+    color: var(--text2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .gold-line {
+    width: 120px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--gold2);
+    margin-bottom: 4px;
+  }
+  .card-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+  /* ── Screen Management ── */
+  .screen { display: none; animation: fadeUp 0.5s ease forwards; }
+  .screen.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Topic Grid ── */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .topic-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .topic-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+  .topic-card:hover { background: var(--glass2); transform: translateY(-2px); }
+  .topic-card:hover::before { transform: scaleX(1); }
+  .topic-card.selected {
+    background: rgba(201,147,58,0.12);
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,147,58,0.2);
+  }
+  .topic-card.selected::before { transform: scaleX(1); }
+  .topic-icon { font-size: 24px; margin-bottom: 8px; }
+  .topic-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .topic-count { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .topic-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 20px; height: 20px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: 11px; color: var(--navy);
+  }
+  .topic-card.selected .topic-check { display: flex; }
+
+  /* ── Config Row ── */
+  .config-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .config-group { flex: 1; min-width: 160px; }
+  .config-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .config-select {
+    width: 100%;
+    background: var(--glass2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9933a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .config-select:focus { outline: none; border-color: var(--gold); }
+  .config-select option { background: var(--navy2); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 28px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: var(--navy);
+    box-shadow: 0 4px 20px rgba(201,147,58,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,147,58,0.5); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold2); }
+  .btn-danger {
+    background: rgba(192,57,43,0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(192,57,43,0.3);
+  }
+  .btn-success {
+    background: rgba(26,122,74,0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(26,122,74,0.3);
+  }
+  .btn-full { width: 100%; }
+
+  /* ── Loading ── */
+  .loading-wrap {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .spinner {
+    width: 50px; height: 50px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold2); }
+  .loading-sub { font-size: 13px; color: var(--text2); margin-top: 8px; }
+
+  /* ── Quiz Header ── */
+  .quiz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .quiz-topic-badge {
+    background: rgba(201,147,58,0.12);
+    border: 1px solid rgba(201,147,58,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 11px;
+    color: var(--gold2);
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .quiz-progress-text { font-size: 13px; color: var(--text2); }
+  .quiz-score-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; color: var(--gold2); font-weight: 600;
+  }
+
+  /* ── Progress Bar ── */
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 4px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── Timer ── */
+  .timer-wrap {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .timer-ring {
+    position: relative; width: 48px; height: 48px; flex-shrink: 0;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 3; }
+  .timer-ring .bg { stroke: rgba(255,255,255,0.08); }
+  .timer-ring .fg { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .timer-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--gold2);
+  }
+  .timer-ring.urgent .fg { stroke: #e74c3c; }
+  .timer-ring.urgent .timer-num { color: #e74c3c; }
+  .difficulty-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .diff-mudah { background: rgba(26,122,74,0.2); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+  .diff-sedang { background: rgba(201,147,58,0.2); color: var(--gold2); border: 1px solid rgba(201,147,58,0.3); }
+  .diff-sulit { background: rgba(192,57,43,0.2); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
+
+  /* ── Question ── */
+  .question-num {
+    font-size: 11px; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 10px;
+  }
+  .question-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(17px, 3vw, 22px);
+    line-height: 1.55;
+    color: var(--cream);
+    margin-bottom: 24px;
+    min-height: 60px;
+  }
+
+  /* ── Options ── */
+  .options-grid { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.22s;
+    text-align: left;
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .option-btn:hover:not(:disabled) {
+    background: var(--glass2);
+    border-color: rgba(201,147,58,0.5);
+    transform: translateX(4px);
+  }
+  .option-label {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    color: var(--text2);
+    transition: all 0.22s;
+    margin-top: 1px;
+  }
+  .option-text { font-size: 14px; color: var(--text); line-height: 1.5; padding-top: 3px; }
+  .option-btn.correct {
+    background: rgba(26,122,74,0.15);
+    border-color: rgba(46,204,113,0.5);
+  }
+  .option-btn.correct .option-label {
+    background: rgba(46,204,113,0.2);
+    border-color: #2ecc71;
+    color: #2ecc71;
+  }
+  .option-btn.wrong {
+    background: rgba(192,57,43,0.12);
+    border-color: rgba(231,76,60,0.5);
+  }
+  .option-btn.wrong .option-label {
+    background: rgba(231,76,60,0.15);
+    border-color: #e74c3c;
+    color: #e74c3c;
+  }
+  .option-btn:disabled { cursor: default; }
+  .option-btn.selected-correct { animation: correct-flash 0.4s ease; }
+  .option-btn.selected-wrong { animation: wrong-shake 0.4s ease; }
+  @keyframes correct-flash {
+    0%,100% { transform: none; }
+    50% { transform: scale(1.01); }
+  }
+  @keyframes wrong-shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  /* ── Explanation ── */
+  .explanation-box {
+    margin-top: 20px;
+    background: rgba(201,147,58,0.06);
+    border: 1px solid rgba(201,147,58,0.2);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px;
+    display: none;
+    animation: fadeUp 0.3s ease;
+  }
+  .explanation-box.visible { display: block; }
+  .explanation-header {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .explanation-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── Action Row ── */
+  .action-row {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 24px;
+  }
+  /* ── Results ── */
+  .result-hero {
+    text-align: center;
+    padding: 40px 20px 30px;
+  }
+  .result-ring {
+    position: relative;
+    width: 150px; height: 150px;
+    margin: 0 auto 24px;
+  }
+  .result-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .result-ring circle { fill: none; stroke-width: 6; }
+  .result-ring .bg-r { stroke: rgba(255,255,255,0.06); }
+  .result-ring .fg-r { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset 1.5s ease; }
+  .result-score-num {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .result-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 700;
+    color: var(--gold2);
+    line-height: 1;
+  }
+  .result-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; margin-top: 4px; }
+  .result-grade {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .result-grade.grade-a { color: #2ecc71; }
+  .result-grade.grade-b { color: var(--gold2); }
+  .result-grade.grade-c { color: #f39c12; }
+  .result-grade.grade-d { color: #e74c3c; }
+  .result-message { font-size: 15px; color: var(--text2); margin-bottom: 24px; }
+  .result-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 28px;
+  }
+  .stat-box {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+  }
+  .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; }
+  .stat-num.green { color: #2ecc71; }
+  .stat-num.red { color: #e74c3c; }
+  .stat-num.gold { color: var(--gold2); }
+  .stat-lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* ── Review ── */
+  .review-item {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--border);
+  }
+  .review-item.correct-item { border-left-color: #2ecc71; }
+  .review-item.wrong-item { border-left-color: #e74c3c; }
+  .review-q { font-size: 14px; color: var(--text); margin-bottom: 8px; font-weight: 500; }
+  .review-answers { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .review-your { color: var(--text2); }
+  .review-correct { color: #2ecc71; }
+  .review-expl { font-size: 12px; color: var(--text2); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+  /* ── All Select ── */
+  .select-all-row {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 10px 22px;
+    font-size: 13px; color: var(--text);
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── Error ── */
+  .error-box {
+    background: rgba(192,57,43,0.1);
+    border: 1px solid rgba(231,76,60,0.3);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    color: #e74c3c;
+    margin-top: 16px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .topic-grid { grid-template-columns: 1fr 1fr; }
+    .result-stats { grid-template-columns: repeat(3, 1fr); }
+    .config-row { flex-direction: column; }
+  }
+
+  /* ── Tab Nav ── */
+  .tab-nav {
+    display: flex; gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 13px; font-weight: 600;
+    color: var(--text2);
+    background: none; border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tab-btn.active { color: var(--gold2); border-bottom-color: var(--gold); }
+  .tab-btn:hover { color: var(--text); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeUp 0.3s ease; }
+
+  .section-divider {
+    text-align: center;
+    font-size: 11px; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 2px;
+    margin: 24px 0 16px;
+    position: relative;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    position: absolute; top: 50%;
+    width: calc(50% - 60px);
+    height: 1px;
+    background: var(--border);
+  }
+  .section-divider::before { left: 0; }
+  .section-divider::after { right: 0; }
+
+  .info-row {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+  }
+  .info-key { color: var(--text2); width: 140px; flex-shrink: 0; }
+  .info-val { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-emblem">⚖️</div>
+    <h1>SIMBAH KUIS</h1>
+    <p>Sistem Kuis Hukum Peradilan Agama</p>
+    <div class="gold-line"></div>
+  </header>
+
+  <!-- SCREEN: HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="card">
+      <div class="card-title">Pilih Topik Ujian</div>
+      <div class="card-sub">Soal dihasilkan secara AI oleh Gemini 2.5 Flash — pilih satu atau beberapa topik</div>
+
+      <div class="select-all-row">
+        <button class="btn btn-ghost" onclick="selectAllTopics()" style="font-size:12px;padding:7px 14px">✓ Pilih Semua</button>
+        <button class="btn btn-ghost" onclick="clearAllTopics()" style="font-size:12px;padding:7px 14px">✗ Hapus Pilihan</button>
+      </div>
+
+      <div class="topic-grid" id="topic-grid">
+        <!-- Injected by JS -->
+      </div>
+
+      <div class="gold-line" style="margin:20px 0"></div>
+
+      <div class="config-row">
+        <div class="config-group">
+          <div class="config-label">Jumlah Soal</div>
+          <select id="num-questions" class="config-select">
+            <option value="10">10 Soal</option>
+            <option value="20">20 Soal</option>
+            <option value="30" selected>30 Soal</option>
+            <option value="50">50 Soal</option>
+            <option value="75">75 Soal</option>
+            <option value="100">100 Soal</option>
+          </select>
+        </div>
+        <div class="config-group">
+          <div class="config-label">Tingkat Kesulitan</div>
+          <select id="difficulty" class="config-select">
+            <option value="campuran">Campuran</option>
+            <option value="mudah">Mudah</option>
+            <option value="sedang">Sedang</option>
+            <option value="sulit">Sulit</option>
+          </select>
+        </div>
+        <div class="config-group">
+          <div class="config-label">Waktu per Soal</div>
+          <select id="timer-sec" class="config-select">
+            <option value="0">Tanpa Batas</option>
+            <option value="30">30 Detik</option>
+            <option value="45" selected>45 Detik</option>
+            <option value="60">60 Detik</option>
+            <option value="90">90 Detik</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="error-home" class="error-box"></div>
+
+      <button class="btn btn-primary btn-full" id="btn-start" onclick="startQuiz()">
+        ⚡ Mulai Kuis
+      </button>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Tentang Aplikasi</div>
+      <div class="info-row"><span class="info-key">Teknologi AI</span><span class="info-val">Google Gemini 2.5 Flash</span></div>
+      <div class="info-row"><span class="info-key">Kapasitas Soal</span><span class="info-val">2.000+ soal dari 10 topik hukum</span></div>
+      <div class="info-row"><span class="info-key">Format Soal</span><span class="info-val">Pilihan ganda (4 opsi) + penjelasan</span></div>
+      <div class="info-row"><span class="info-key">Sasaran</span><span class="info-val">Hakim, Panitera, Jurusita, dan aparatur Peradilan Agama</span></div>
+      <div class="info-row" style="border:none"><span class="info-key">Catatan</span><span class="info-val">Soal dihasilkan real-time oleh AI berdasarkan peraturan perundangan yang berlaku</span></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: LOADING -->
+  <div id="screen-loading" class="screen">
+    <div class="card">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">Menyiapkan Soal...</div>
+        <div class="loading-sub" id="loading-status">AI sedang menganalisis dan menyusun soal ujian</div>
+        <div style="margin-top:20px; background:rgba(255,255,255,0.04); border-radius:4px; height:4px; overflow:hidden">
+          <div id="loading-bar" style="height:100%; background:linear-gradient(90deg,#c9933a,#e8b45a); border-radius:4px; width:0%; transition:width 0.5s"></div>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--text2)" id="loading-pct">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: QUIZ -->
+  <div id="screen-quiz" class="screen">
+    <div class="card">
+      <div class="quiz-header">
+        <span class="quiz-topic-badge" id="quiz-topic-label">—</span>
+        <span class="quiz-progress-text" id="quiz-progress-text">Soal 1 / 30</span>
+        <span class="quiz-score-display" id="quiz-score-display">✓ 0</span>
+      </div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+
+      <div class="timer-wrap">
+        <div class="timer-ring" id="timer-ring">
+          <svg viewBox="0 0 48 48">
+            <circle class="bg" cx="24" cy="24" r="21"/>
+            <circle class="fg" id="timer-arc" cx="24" cy="24" r="21"
+              stroke-dasharray="131.9" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="timer-num">—</div>
+        </div>
+        <div>
+          <span class="difficulty-badge" id="diff-badge">—</span>
+          <div style="font-size:11px;color:var(--text2);margin-top:5px" id="source-tag">Sumber: —</div>
+        </div>
+      </div>
+
+      <div class="question-num" id="question-num">Soal 1</div>
+      <div class="question-text" id="question-text">—</div>
+
+      <div class="options-grid" id="options-grid">
+        <!-- Injected by JS -->
+      </div>
+
+      <div class="explanation-box" id="explanation-box">
+        <div class="explanation-header">💡 Penjelasan</div>
+        <div class="explanation-text" id="explanation-text">—</div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" onclick="skipQuestion()" id="btn-skip">⟶ Lewati</button>
+        <button class="btn btn-primary" onclick="nextQuestion()" id="btn-next" style="display:none">Berikutnya →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: RESULT -->
+  <div id="screen-result" class="screen">
+    <div class="card">
+      <div class="result-hero">
+        <div class="result-ring">
+          <svg viewBox="0 0 150 150">
+            <circle class="bg-r" cx="75" cy="75" r="66"/>
+            <circle class="fg-r" id="result-arc" cx="75" cy="75" r="66"
+              stroke-dasharray="414.7" stroke-dashoffset="414.7"/>
+          </svg>
+          <div class="result-score-num">
+            <div class="result-pct" id="result-pct">0%</div>
+            <div class="result-label">Skor Anda</div>
+          </div>
+        </div>
+        <div class="result-grade" id="result-grade">—</div>
+        <div class="result-message" id="result-message">—</div>
+      </div>
+
+      <div class="result-stats">
+        <div class="stat-box">
+          <div class="stat-num green" id="stat-correct">0</div>
+          <div class="stat-lbl">Benar</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num red" id="stat-wrong">0</div>
+          <div class="stat-lbl">Salah</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num gold" id="stat-skip">0</div>
+          <div class="stat-lbl">Dilewati</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('review')">📋 Review Jawaban</button>
+        <button class="tab-btn" onclick="showTab('info')">📊 Statistik</button>
+      </div>
+
+      <div id="tab-review" class="tab-panel active">
+        <div id="review-list"><!-- Injected --></div>
+      </div>
+
+      <div id="tab-info" class="tab-panel">
+        <div id="stats-detail" style="font-size:14px; color:var(--text2)"></div>
+      </div>
+
+      <div class="action-row" style="margin-top:24px">
+        <button class="btn btn-ghost" onclick="goHome()">⟵ Kuis Baru</button>
+        <button class="btn btn-primary" onclick="retryQuiz()">🔄 Ulangi Topik Ini</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const API_KEY = 'AIzaSyBPnPENJDjC1zfn8fA9mma-UVlL0Bl0tWY';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
+const TOPICS = [
+  {
+    id: 'khi',
+    name: 'Kompilasi Hukum Islam (KHI)',
+    icon: '📖',
+    desc: 'Perkawinan, Kewarisan, Perwakafan',
+    prompt: 'Kompilasi Hukum Islam (KHI) — Inpres No. 1 Tahun 1991, mencakup buku I tentang Perkawinan (pasal 1-170), buku II tentang Kewarisan (pasal 171-214), dan buku III tentang Perwakafan (pasal 215-229)'
+  },
+  {
+    id: 'khes',
+    name: 'Kompilasi Hukum Ekonomi Syariah (KHES)',
+    icon: '💼',
+    desc: 'Ekonomi & Bisnis Syariah',
+    prompt: 'Kompilasi Hukum Ekonomi Syariah (KHES) — Perma No. 2 Tahun 2008, mencakup akad, jual beli, mudharabah, musyarakah, murabahah, ijarah, salam, istishna, hawalah, rahn, qardh, wadi\'ah, wakalah'
+  },
+  {
+    id: 'hapa',
+    name: 'Hukum Acara Peradilan Agama',
+    icon: '⚖️',
+    desc: 'UU No. 7/1989 jo. 3/2006 jo. 50/2009',
+    prompt: 'Hukum Acara Peradilan Agama berdasarkan UU No. 7 Tahun 1989 sebagaimana diubah dengan UU No. 3 Tahun 2006 dan UU No. 50 Tahun 2009, mencakup kewenangan absolut, kewenangan relatif, gugatan, permohonan, persidangan, pembuktian, putusan, banding, kasasi, peninjauan kembali, dan eksekusi'
+  },
+  {
+    id: 'elitigasi',
+    name: 'E-Litigasi Peradilan Agama',
+    icon: '💻',
+    desc: 'Perma No. 1/2019 & Sistem Online',
+    prompt: 'E-Litigasi dan administrasi online Peradilan Agama berdasarkan Perma No. 1 Tahun 2019 tentang Administrasi Perkara dan Persidangan di Pengadilan Secara Elektronik, meliputi e-Court, e-Filing, e-Summons, e-Payment, e-Litigation, aplikasi SIPP, sidang online/virtual'
+  },
+  {
+    id: 'perkawinan',
+    name: 'UU Perkawinan',
+    icon: '💒',
+    desc: 'UU No. 1/1974 jo. UU No. 16/2019',
+    prompt: 'Undang-Undang Perkawinan No. 1 Tahun 1974 sebagaimana diubah dengan UU No. 16 Tahun 2019, mencakup syarat perkawinan, pencatatan, hak dan kewajiban suami istri, harta benda, putusnya perkawinan, akibat putusnya perkawinan, pengasuhan anak, dan ketentuan batas usia menikah'
+  },
+  {
+    id: 'kekuasaan',
+    name: 'UU Kekuasaan Kehakiman',
+    icon: '🏛️',
+    desc: 'UU No. 48/2009',
+    prompt: 'Undang-Undang No. 48 Tahun 2009 tentang Kekuasaan Kehakiman, mencakup prinsip-prinsip peradilan, independensi hakim, Mahkamah Agung, Mahkamah Konstitusi, asas-asas peradilan, hak asasi dalam peradilan, pengawasan hakim'
+  },
+  {
+    id: 'hakim',
+    name: 'Peraturan Jabatan Hakim PA',
+    icon: '👨‍⚖️',
+    desc: 'Rekrutmen, Etika, Pembinaan',
+    prompt: 'Peraturan perundangan tentang Hakim Pengadilan Agama, meliputi UU No. 48/2009, UU No. 7/1989 jo. 3/2006, peraturan MA tentang rekrutmen, promosi, mutasi, pemberhentian, kode etik hakim (KEPPH), pengawasan hakim, disiplin hakim, hak dan kewajiban hakim'
+  },
+  {
+    id: 'panitera',
+    name: 'Jabatan Panitera & Panitera Pengganti',
+    icon: '📝',
+    desc: 'Tugas, Fungsi & Kewenangan',
+    prompt: 'Peraturan perundangan tentang Panitera dan Panitera Pengganti Pengadilan Agama, meliputi: Perma No. 7 Tahun 2015 tentang Organisasi dan Tata Kerja Kepaniteraan; tugas, fungsi, dan wewenang panitera; administrasi perkara; buku register; akta cerai; kode etik kepaniteraan; pengangkatan dan pemberhentian panitera'
+  },
+  {
+    id: 'jurusita',
+    name: 'Jabatan Jurusita & Jurusita Pengganti',
+    icon: '📋',
+    desc: 'Tugas Panggilan & Eksekusi',
+    prompt: 'Peraturan perundangan tentang Jurusita dan Jurusita Pengganti Pengadilan Agama, meliputi: tugas melakukan panggilan/relaas, pelaksanaan putusan, aanmaning, sita jaminan, sita eksekusi, eksekusi riil, eksekusi pembayaran, lelang, berita acara sita; peraturan MA terkait jurusita; kode etik jurusita'
+  },
+  {
+    id: 'administrasi',
+    name: 'Administrasi Peradilan Agama',
+    icon: '🗂️',
+    desc: 'POLA BINDALMIN & Prosedur',
+    prompt: 'Administrasi Peradilan Agama, mencakup POLA BINDALMIN (Pola Pembinaan dan Pengendalian Administrasi), meja pertama, meja kedua, meja ketiga, buku register perkara, biaya perkara, SKUM, BAS, arsip berkas perkara, minutasi, laporan bulanan, laporan tahunan, prosedur penerimaan perkara di Pengadilan Agama'
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let selectedTopics = [];
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let skipped = 0;
+let answers = [];
+let timerInterval = null;
+let timerMax = 45;
+let lastConfig = {};
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+function init() {
+  const grid = document.getElementById('topic-grid');
+  TOPICS.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'topic-card';
+    el.id = `topic-${t.id}`;
+    el.onclick = () => toggleTopic(t.id);
+    el.innerHTML = `
+      <div class="topic-check">✓</div>
+      <div class="topic-icon">${t.icon}</div>
+      <div class="topic-name">${t.name}</div>
+      <div class="topic-count">${t.desc}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function toggleTopic(id) {
+  const idx = selectedTopics.indexOf(id);
+  const el = document.getElementById(`topic-${id}`);
+  if (idx >= 0) {
+    selectedTopics.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    selectedTopics.push(id);
+    el.classList.add('selected');
+  }
+}
+
+function selectAllTopics() {
+  selectedTopics = TOPICS.map(t => t.id);
+  TOPICS.forEach(t => document.getElementById(`topic-${t.id}`).classList.add('selected'));
+}
+
+function clearAllTopics() {
+  selectedTopics = [];
+  TOPICS.forEach(t => document.getElementById(`topic-${t.id}`).classList.remove('selected'));
+}
+
+// ═══════════════════════════════════════════════════════
+// START QUIZ
+// ═══════════════════════════════════════════════════════
+async function startQuiz() {
+  const errEl = document.getElementById('error-home');
+  errEl.className = 'error-box';
+
+  if (selectedTopics.length === 0) {
+    errEl.textContent = '⚠️ Pilih minimal satu topik sebelum memulai kuis.';
+    errEl.className = 'error-box visible';
+    return;
+  }
+
+  const numQ = parseInt(document.getElementById('num-questions').value);
+  const difficulty = document.getElementById('difficulty').value;
+  const timerSec = parseInt(document.getElementById('timer-sec').value);
+  timerMax = timerSec;
+
+  lastConfig = { numQ, difficulty, timerSec, topics: [...selectedTopics] };
+
+  showScreen('loading');
+  questions = [];
+
+  try {
+    // Generate questions in batches
+    const batchSize = 10;
+    const numBatches = Math.ceil(numQ / batchSize);
+    let generated = 0;
+
+    for (let b = 0; b < numBatches; b++) {
+      const remaining = numQ - generated;
+      const thisBatch = Math.min(batchSize, remaining);
+
+      // Pick topic for this batch
+      const topicId = selectedTopics[b % selectedTopics.length];
+      const topic = TOPICS.find(t => t.id === topicId);
+
+      // Update loading UI
+      const pct = Math.round((b / numBatches) * 90);
+      document.getElementById('loading-bar').style.width = pct + '%';
+      document.getElementById('loading-pct').textContent = pct + '%';
+      document.getElementById('loading-status').textContent =
+        `Menghasilkan soal ${generated + 1}–${generated + thisBatch} tentang ${topic.name}...`;
+
+      const batch = await generateBatch(topic, thisBatch, difficulty, generated);
+      questions = questions.concat(batch);
+      generated += batch.length;
+
+      if (generated >= numQ) break;
+    }
+
+    // Shuffle
+    questions = shuffle(questions).slice(0, numQ);
+
+    document.getElementById('loading-bar').style.width = '100%';
+    document.getElementById('loading-pct').textContent = '100%';
+    document.getElementById('loading-status').textContent = `✓ ${questions.length} soal siap!`;
+
+    await sleep(600);
+    initQuiz();
+    showScreen('quiz');
+
+  } catch (e) {
+    console.error(e);
+    showScreen('home');
+    errEl.textContent = `❌ Gagal menghasilkan soal: ${e.message}. Periksa koneksi internet dan coba lagi.`;
+    errEl.className = 'error-box visible';
+  }
+}
+
+async function generateBatch(topic, count, difficulty, offset) {
+  const diffPrompt = difficulty === 'campuran'
+    ? 'Buat soal dengan kesulitan bervariasi: beberapa mudah, beberapa sedang, beberapa sulit.'
+    : `Semua soal dengan tingkat kesulitan: ${difficulty}.`;
+
+  const prompt = `Kamu adalah ahli hukum Islam dan hukum Peradilan Agama Indonesia. Buat ${count} soal pilihan ganda ujian tentang: ${topic.prompt}.
+
+${diffPrompt}
+
+ATURAN WAJIB:
+- Setiap soal memiliki TEPAT 4 pilihan jawaban (A, B, C, D)
+- Pastikan hanya SATU jawaban yang benar
+- Soal harus spesifik, mengacu pada pasal/ayat/ketentuan tertentu bila memungkinkan
+- Soal tidak boleh sama satu sama lain
+- Awali dengan soal nomor ${offset + 1}
+
+Kembalikan HANYA JSON array valid (tanpa teks tambahan, tanpa markdown):
+[
+  {
+    "q": "teks pertanyaan lengkap",
+    "opts": ["A. teks opsi A", "B. teks opsi B", "C. teks opsi C", "D. teks opsi D"],
+    "ans": 0,
+    "exp": "penjelasan singkat mengapa jawaban tersebut benar, sebutkan dasar hukumnya",
+    "diff": "mudah|sedang|sulit",
+    "src": "nama peraturan/pasal yang relevan"
+  }
+]
+Catatan: "ans" adalah index (0-3) dari opsi yang benar.`;
+
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 4000
+      }
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+
+  // Clean JSON
+  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    // Try to extract JSON array
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error('Format JSON tidak valid dari API');
+  }
+
+  return parsed.map(item => ({
+    question: item.q || item.question || '—',
+    options: item.opts || item.options || [],
+    answer: typeof item.ans !== 'undefined' ? item.ans : (item.answer || 0),
+    explanation: item.exp || item.explanation || 'Tidak ada penjelasan.',
+    difficulty: item.diff || item.difficulty || 'sedang',
+    source: item.src || item.source || topic.name,
+    topicId: topic.id,
+    topicName: topic.name
+  }));
+}
+
+// ═══════════════════════════════════════════════════════
+// QUIZ ENGINE
+// ═══════════════════════════════════════════════════════
+function initQuiz() {
+  currentQ = 0;
+  score = 0;
+  skipped = 0;
+  answers = [];
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  if (!q) { endQuiz(); return; }
+
+  // Header
+  document.getElementById('quiz-topic-label').textContent = q.topicName || '—';
+  document.getElementById('quiz-progress-text').textContent = `Soal ${currentQ + 1} / ${questions.length}`;
+  document.getElementById('quiz-score-display').textContent = `✓ ${score}`;
+  document.getElementById('progress-fill').style.width = `${(currentQ / questions.length) * 100}%`;
+
+  // Timer
+  document.getElementById('timer-num').textContent = timerMax > 0 ? timerMax : '∞';
+  startTimer();
+
+  // Difficulty
+  const diffEl = document.getElementById('diff-badge');
+  diffEl.textContent = q.difficulty?.charAt(0).toUpperCase() + q.difficulty?.slice(1) || 'Sedang';
+  diffEl.className = `difficulty-badge diff-${q.difficulty || 'sedang'}`;
+
+  // Source
+  document.getElementById('source-tag').textContent = `Sumber: ${q.source || '—'}`;
+
+  // Question
+  document.getElementById('question-num').textContent = `Soal ${currentQ + 1}`;
+  document.getElementById('question-text').textContent = q.question;
+
+  // Options
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  (q.options || []).forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-label">${labels[i]}</span><span class="option-text">${opt}</span>`;
+    btn.onclick = () => selectOption(i);
+    grid.appendChild(btn);
+  });
+
+  // Explanation
+  const expBox = document.getElementById('explanation-box');
+  expBox.className = 'explanation-box';
+
+  // Buttons
+  document.getElementById('btn-skip').style.display = 'inline-flex';
+  document.getElementById('btn-next').style.display = 'none';
+}
+
+function selectOption(chosen) {
+  clearTimer();
+  const q = questions[currentQ];
+  const isCorrect = chosen === q.answer;
+  if (isCorrect) score++;
+  else skipped;  // wrong
+
+  answers.push({
+    question: q.question,
+    options: q.options,
+    chosen,
+    correct: q.answer,
+    isCorrect,
+    explanation: q.explanation,
+    source: q.source,
+    topicName: q.topicName
+  });
+
+  // Style options
+  const optBtns = document.querySelectorAll('.option-btn');
+  optBtns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    if (i === chosen && !isCorrect) btn.classList.add('wrong');
+  });
+  if (isCorrect) optBtns[chosen].classList.add('selected-correct');
+  else { optBtns[chosen].classList.add('selected-wrong'); }
+
+  // Explanation
+  const expBox = document.getElementById('explanation-box');
+  document.getElementById('explanation-text').textContent = q.explanation;
+  expBox.className = 'explanation-box visible';
+
+  // Buttons
+  document.getElementById('btn-skip').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-flex';
+
+  // Toast
+  showToast(isCorrect ? '✓ Jawaban Benar!' : `✗ Jawaban Salah — ${q.options[q.answer]}`);
+
+  // Score update
+  document.getElementById('quiz-score-display').textContent = `✓ ${score}`;
+}
+
+function skipQuestion() {
+  clearTimer();
+  const q = questions[currentQ];
+  skipped++;
+  answers.push({
+    question: q.question,
+    options: q.options,
+    chosen: -1,
+    correct: q.answer,
+    isCorrect: false,
+    explanation: q.explanation,
+    source: q.source,
+    topicName: q.topicName
+  });
+  nextQuestion();
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    endQuiz();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════
+function startTimer() {
+  clearTimer();
+  if (timerMax <= 0) {
+    document.getElementById('timer-num').textContent = '∞';
+    return;
+  }
+
+  let left = timerMax;
+  const circ = 2 * Math.PI * 21; // r=21
+
+  function tick() {
+    const arc = document.getElementById('timer-arc');
+    const ring = document.getElementById('timer-ring');
+    const numEl = document.getElementById('timer-num');
+
+    const pct = left / timerMax;
+    arc.style.strokeDashoffset = circ * (1 - pct);
+    numEl.textContent = left;
+
+    if (left <= 10) ring.classList.add('urgent');
+    else ring.classList.remove('urgent');
+
+    if (left <= 0) {
+      clearTimer();
+      selectOption(-1); // Time up — auto skip
+      return;
+    }
+    left--;
+  }
+
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function clearTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  document.getElementById('timer-ring').classList.remove('urgent');
+}
+
+// ═══════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════
+function endQuiz() {
+  clearTimer();
+  showScreen('result');
+
+  const total = questions.length;
+  const correct = answers.filter(a => a.isCorrect).length;
+  const wrong = answers.filter(a => !a.isCorrect && a.chosen !== -1).length;
+  const skippedCount = answers.filter(a => a.chosen === -1).length;
+  const pct = Math.round((correct / total) * 100);
+
+  // Ring animation
+  const circ = 2 * Math.PI * 66;
+  const arc = document.getElementById('result-arc');
+  setTimeout(() => {
+    arc.style.strokeDashoffset = circ * (1 - pct / 100);
+    // Color based on score
+    if (pct >= 80) arc.style.stroke = '#2ecc71';
+    else if (pct >= 60) arc.style.stroke = '#e8b45a';
+    else arc.style.stroke = '#e74c3c';
+  }, 200);
+
+  document.getElementById('result-pct').textContent = pct + '%';
+
+  // Grade
+  let grade, gradeClass, message;
+  if (pct >= 90) {
+    grade = 'Istimewa (A+)'; gradeClass = 'grade-a';
+    message = 'Penguasaan hukum Anda sangat luar biasa! Pertahankan prestasi ini.';
+  } else if (pct >= 80) {
+    grade = 'Sangat Baik (A)'; gradeClass = 'grade-a';
+    message = 'Penguasaan materi hukum Anda sangat baik. Terus tingkatkan!';
+  } else if (pct >= 70) {
+    grade = 'Baik (B)'; gradeClass = 'grade-b';
+    message = 'Anda telah menguasai sebagian besar materi. Perkuat poin-poin yang masih lemah.';
+  } else if (pct >= 60) {
+    grade = 'Cukup (C)'; gradeClass = 'grade-c';
+    message = 'Perlu peningkatan. Pelajari kembali materi yang belum dikuasai.';
+  } else {
+    grade = 'Kurang (D)'; gradeClass = 'grade-d';
+    message = 'Diperlukan belajar lebih intensif. Review seluruh materi dan coba lagi.';
+  }
+
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-grade').className = `result-grade ${gradeClass}`;
+  document.getElementById('result-message').textContent = message;
+  document.getElementById('result-pct').textContent = pct + '%';
+
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+  document.getElementById('stat-skip').textContent = skippedCount;
+
+  // Review list
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  answers.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = `review-item ${a.isCorrect ? 'correct-item' : 'wrong-item'}`;
+    const yourAns = a.chosen === -1 ? 'Dilewati' : (a.options[a.chosen] || '—');
+    item.innerHTML = `
+      <div class="review-q">${i + 1}. ${a.question}</div>
+      <div class="review-answers">
+        <div class="review-your">Jawaban Anda: <b>${yourAns}</b></div>
+        ${!a.isCorrect ? `<div class="review-correct">✓ Benar: <b>${a.options[a.correct] || '—'}</b></div>` : ''}
+      </div>
+      <div class="review-expl">💡 ${a.explanation}</div>
+    `;
+    list.appendChild(item);
+  });
+
+  // Stats detail
+  const topicStats = {};
+  answers.forEach(a => {
+    if (!topicStats[a.topicName]) topicStats[a.topicName] = { c: 0, t: 0 };
+    topicStats[a.topicName].t++;
+    if (a.isCorrect) topicStats[a.topicName].c++;
+  });
+
+  let statsHtml = `<div style="margin-bottom:16px; font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--gold2)">Performa per Topik</div>`;
+  for (const [name, stat] of Object.entries(topicStats)) {
+    const p = Math.round((stat.c / stat.t) * 100);
+    statsHtml += `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span>${name}</span>
+          <span style="color:var(--gold2);font-weight:600">${stat.c}/${stat.t} (${p}%)</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:6px">
+          <div style="height:100%;border-radius:4px;width:${p}%;background:${p>=70?'#2ecc71':p>=50?'#e8b45a':'#e74c3c'};transition:width 1s"></div>
+        </div>
+      </div>`;
+  }
+  document.getElementById('stats-detail').innerHTML = statsHtml;
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (name === 'quiz') {
+    renderQuestion();
+  }
+}
+
+function goHome() {
+  clearTimer();
+  showScreen('home');
+}
+
+function retryQuiz() {
+  questions = shuffle(questions);
+  initQuiz();
+  showScreen('quiz');
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
